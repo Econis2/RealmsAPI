@@ -50,6 +50,9 @@ class RealmsAPI {
 
     async getWorldId(){
         try{
+
+            await this.getAccessCookie()
+
             let r = await axios({
                 method: "get",
                 url: this.realmsUrl + "/worlds",
@@ -70,8 +73,29 @@ class RealmsAPI {
         }
     }
 
-    async getBackupUrl (){
+    async getPlayers(){
         try{
+
+            let worldId = await this.getWorldId()
+
+            let r = await axios({
+                method: "get",
+                url: this.realmsUrl + '/worlds/' + worldId,
+                headers: this.headers
+            })
+
+            return r.data.players
+        }
+        catch(e){
+
+        }
+    }
+
+    async getBackupUrl (count){
+        try{
+            if(!count){
+                count = 0
+            }
             let worldId = await this.getWorldId()
 
             let r = await axios({
@@ -82,11 +106,12 @@ class RealmsAPI {
                 return r.data.downloadLink
         }
         catch (e){
-            if(e.response.status == 503){
-                return await this.getBackupUrl()
+            if(e.response.status == 503 && count <= 3){
+                count ++
+                return await this.getBackupUrl(count)
             }
             console.log(e.response.status)
-            console.log("Unable to get Backup URL")
+            console.log("Unable to get Backup URL Timeout Reached")
         }
     }
 }
